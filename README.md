@@ -1,7 +1,7 @@
 <h1 align="center">Legal-MVP</h1>
 
 <p align="center">
-  <em>Seven-day sprint: contract intelligence from PDF upload to Azure-hosted demo.</em>
+  <em> Contract intelligence from PDF upload to Azure-hosted demo.</em>
 </p>
 
 <p align="center">
