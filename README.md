@@ -8,7 +8,7 @@
   <img src="docs/architecture.png" alt="Architecture diagram" width="850" />
 </p>
 
-## 🎯 What’s inside
+##  What’s inside
 
 - **FastAPI service** that turns digitally generated contract PDFs into structured facts:
   - `party_a`, `party_b`
@@ -22,11 +22,11 @@
 - **Audit trail** – each extraction logs file hash + confidences (no document text stored).
 - **Dockerized & Azure-ready** – the exact image powering the live demo.
 
-> 🎥 **Video demo** (drop your link here): `TODO: https://…`
+>  **Video demo** (drop your link here): `TODO: https://…`
 
 ---
 
-## 🛠️ How the workflow runs
+##  How the workflow runs
 
 1. **PDF upload** → FastAPI receives the file and hashes it.
 2. **Text extraction** → `pdfplumber` reads page-by-page text.
@@ -40,7 +40,7 @@
 
 ---
 
-## 🚀 Quickstart (local)
+##  Quickstart (local)
 
 ```bash
 python -m venv .venv
@@ -60,7 +60,7 @@ docker run --rm -p 8000:8000 legal-mvp
 
 ---
 
-## 📦 Deployment snapshot
+##  Deployment snapshot
 
 1. Build the container with the bundled Dockerfile (Python 3.11 slim).
 2. Push to Docker Hub (`ashwinvel2000/legal-mvp`).
@@ -74,7 +74,7 @@ docker run --rm -p 8000:8000 legal-mvp
 
 ---
 
-## 📊 Mini evaluation
+##  Mini evaluation
 
 Hand-label a few public NDAs in `eval/golden.jsonl`, drop the PDFs into `data/samples/`, then run:
 
@@ -86,7 +86,7 @@ You’ll get per-field precision/recall across the tiny golden set.
 
 ---
 
-## ⚙️ Project anatomy
+##  Project anatomy
 
 ```
 app/         # FastAPI app + demo templates
@@ -98,7 +98,7 @@ docs/        # Architecture, process, and manager-friendly diagrams
 
 ---
 
-## 🧭 Roadmap
+##  Roadmap
 
 - Expand party extraction via fine-tuned legal NER (reduce heuristics).
 - Add OCR/layout parsing for scanned documents.
