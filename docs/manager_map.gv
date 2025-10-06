@@ -1,0 +1,39 @@
+digraph "legal_mvp_manager_map" {
+    graph [
+        fontname="Segoe UI",
+        bgcolor="white",
+        label="How the Legal-MVP Demo Came Together",
+        labelloc=t,
+        fontsize=18
+    ];
+
+    node [
+        shape=rect,
+        style="rounded,filled",
+        fontname="Segoe UI",
+        fontsize=12,
+        color="#1f2937",
+        fillcolor="#e0f2fe",
+        width=0,
+        height=0,
+        margin="0.32,0.2"
+    ];
+
+    edge [
+        color="#475569",
+        arrowsize=0.75,
+        penwidth=1.1
+    ];
+
+    step1 [label="Select Hugging Face models\n• QA: akdeniz27/roberta-base-cuad\n• NER: dslim/bert-base-NER", fillcolor="#dbeafe"];
+    step2 [label="Read PDF pages\n(pdfplumber handles digital text)", fillcolor="#e0f2fe"];
+    step3 [label="Run QA + NER extraction\n(FastAPI service using those models)", fillcolor="#e0f2fe"];
+    step4 [label="Build browser demo page\n(upload form + results)", fillcolor="#e0f2fe"];
+    step5 [label="Test locally\n(pytest + sample contracts)", fillcolor="#fef3c7"];
+    step6 [label="Containerize with Docker\n(Python 3.11 slim image)", fillcolor="#d1fae5"];
+    step7 [label="Push image to Docker Hub\n(ashwinvel2000/legal-mvp)", fillcolor="#bbf7d0"];
+    step8 [label="Deploy Docker image on Azure\nWeb App for Containers (PORT=8000)", fillcolor="#bbf7d0"];
+    step9 [label="Share live URL\nManagers upload PDFs, see results", fillcolor="#fde68a"];
+
+    step1 -> step2 -> step3 -> step4 -> step5 -> step6 -> step7 -> step8 -> step9;
+}

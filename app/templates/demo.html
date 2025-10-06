@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>legal-mvp demo</title>
+    <style>
+        :root {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #0f172a;
+            background-color: #f3f5f9;
+        }
+        body { margin: 0; padding: 0; }
+        .wrapper { max-width: 960px; margin: 0 auto; padding: 48px 24px 96px; }
+        header h1 { margin-bottom: 0.25rem; }
+        header p { margin: 0; color: #475569; }
+        form.upload { margin: 32px 0 16px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+        input[type=file] { flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5f5; background: #fff; }
+        button.primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: transform 0.1s ease, box-shadow 0.1s ease; }
+        button.primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2); }
+        button.primary:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
+        .hint { font-size: 0.85rem; color: #64748b; margin-bottom: 12px; }
+        .card { background: #fff; border-radius: 16px; padding: 24px 28px; margin-top: 24px; box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08); }
+        .card h2 { margin-top: 0; }
+        #status { min-height: 26px; font-weight: 600; }
+        #status.error { color: #b91c1c; }
+        #status.success { color: #15803d; }
+        .spinner { width: 42px; height: 42px; border: 4px solid rgba(37, 99, 235, 0.2); border-top-color: #2563eb; border-radius: 50%; animation: spin 0.9s linear infinite; margin: 12px 0; display: none; }
+        .spinner.active { display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.08em; color: #64748b; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #e2e8ff; color: #1d4ed8; font-size: 0.82rem; font-weight: 600; }
+        .confidence { font-weight: 600; }
+        .confidence.high { color: #15803d; }
+        .confidence.med { color: #d97706; }
+        .confidence.low { color: #b91c1c; }
+        details { background: #f8fafc; border-radius: 12px; padding: 10px 14px; margin-top: 8px; }
+        details p { margin: 8px 0 0; font-size: 0.9rem; color: #334155; white-space: pre-line; }
+        #results { display: none; }
+        #provenance-card { display: none; }
+        #json-output { background: #0f172a; color: #e2e8f0; padding: 18px; border-radius: 12px; overflow-x: auto; font-size: 0.86rem; }
+        .toast { position: fixed; top: 24px; right: 24px; min-width: 220px; padding: 14px 16px; border-radius: 12px; background: #1d4ed8; color: #fff; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18); opacity: 0; transform: translateY(-12px); pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; }
+        .toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .toast.error { background: #b91c1c; }
+        footer { margin-top: 48px; font-size: 0.85rem; color: #64748b; }
+        .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #f1f5f9; font-size: 0.82rem; }
+        .pill.low { color: #b91c1c; background: rgba(185, 28, 28, 0.1); }
+        .pill.mid { color: #d97706; background: rgba(217, 119, 6, 0.12); }
+        .pill.high { color: #15803d; background: rgba(21, 128, 61, 0.12); }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <header>
+        <h1>Contract Extraction Demo</h1>
+        <p>Upload a digitally generated contract PDF to surface both parties and critical dates in seconds.</p>
+    </header>
+
+    <section class="card">
+        <form id="upload-form" class="upload" novalidate>
+            <input type="file" id="file-input" name="file" accept="application/pdf" required>
+            <button type="submit" id="submit-btn" class="primary">Extract</button>
+        </form>
+        <div class="hint">Accepts digital PDFs up to 10&nbsp;MB. We never persist document text—only hashes reach the audit log.</div>
+        <div id="status"></div>
+        <div id="loader" class="spinner"></div>
+        <div id="results">
+            <table>
+                <thead>
+                    <tr><th>Field</th><th>Value</th><th>Page</th><th>Span</th><th>Confidence</th><th>Evidence</th></tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card" id="provenance-card">
+        <h2>Provenance Snapshot</h2>
+        <p class="pill" id="page-count-pill"></p>
+        <p><strong>File hash:</strong> <span id="file-hash"></span></p>
+        <p><strong>Extraction timestamp:</strong> <span id="timestamp"></span></p>
+        <details>
+            <summary>Raw JSON response</summary>
+            <pre id="json-output"></pre>
+        </details>
+    </section>
+
+    <footer>
+        <p>Powered by Hugging Face QA (akdeniz27/roberta-base-cuad) with NER fallback (dslim/bert-base-NER). Scanned PDFs are out-of-scope for this MVP.</p>
+    </footer>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
+const LOW_CONF = 0.5;
+const MID_CONF = 0.75;
+
+const uploadForm = document.getElementById('upload-form');
+const fileInput = document.getElementById('file-input');
+const statusEl = document.getElementById('status');
+const loader = document.getElementById('loader');
+const submitBtn = document.getElementById('submit-btn');
+const resultsTable = document.getElementById('results');
+const resultsBody = document.getElementById('results-body');
+const provCard = document.getElementById('provenance-card');
+const fileHashEl = document.getElementById('file-hash');
+const timestampEl = document.getElementById('timestamp');
+const jsonOutput = document.getElementById('json-output');
+const toast = document.getElementById('toast');
+const pageCountPill = document.getElementById('page-count-pill');
+
+function showToast(message, variant = 'info') {
+    toast.textContent = message;
+    toast.className = 'toast show' + (variant === 'error' ? ' error' : '');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3200);
+}
+
+function resetUI() {
+    statusEl.textContent = '';
+    statusEl.className = '';
+    resultsTable.style.display = 'none';
+    provCard.style.display = 'none';
+    resultsBody.innerHTML = '';
+    loader.classList.remove('active');
+}
+
+function formatConfidence(score) {
+    if (score === undefined || score === null) {
+        return { text: '—', cls: '' };
+    }
+    const pct = Number(score * 100).toFixed(1) + '%';
+    if (score < LOW_CONF) return { text: pct, cls: 'confidence low', indicator: 'Low confidence' };
+    if (score < MID_CONF) return { text: pct, cls: 'confidence med', indicator: 'Moderate confidence' };
+    return { text: pct, cls: 'confidence high', indicator: 'High confidence' };
+}
+
+function escapeHtml(value) {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+uploadForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    resetUI();
+
+    if (!fileInput.files.length) {
+        statusEl.textContent = 'Please choose a PDF to upload.';
+        statusEl.className = 'error';
+        return;
+    }
+
+    const file = fileInput.files[0];
+    if (file.type !== 'application/pdf') {
+        statusEl.textContent = 'Only PDF files are supported for this demo.';
+        statusEl.className = 'error';
+        showToast('Upload a PDF document.', 'error');
+        return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+        statusEl.textContent = 'File too large. Keep PDFs under 10 MB for the MVP.';
+        statusEl.className = 'error';
+        showToast('PDF exceeds 10 MB limit.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    submitBtn.disabled = true;
+    loader.classList.add('active');
+    statusEl.textContent = 'Running extraction… first request may take ~30 seconds while models warm up.';
+
+    try {
+        const response = await fetch('/extract', { method: 'POST', body: formData });
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload?.detail || 'Extraction failed');
+        }
+
+        statusEl.textContent = 'Extraction complete. The table below is safe to share with management.';
+        statusEl.className = 'success';
+        showToast('Extraction finished successfully.');
+
+        const entities = Array.isArray(payload.entities) ? payload.entities : [];
+        const pageCounts = new Set(entities.map((item) => item.page).filter(Boolean));
+        pageCountPill.textContent = `${pageCounts.size || '—'} pages referenced`;
+
+        entities.forEach((entity) => {
+            const row = document.createElement('tr');
+            const spanText = Array.isArray(entity.span) ? `[${entity.span[0]}, ${entity.span[1]}]` : '—';
+            const confidence = formatConfidence(entity.confidence);
+            const evidence = entity.evidence ? `<details><summary>Show snippet</summary><p>${escapeHtml(entity.evidence)}</p></details>` : '—';
+            row.innerHTML = `
+                <td><span class="badge">${escapeHtml(entity.field)}</span></td>
+                <td>${entity.value ? escapeHtml(entity.value) : '—'}</td>
+                <td>${entity.page ?? '—'}</td>
+                <td>${spanText}</td>
+                <td><span class="${confidence.cls}" title="${confidence.indicator || ''}">${confidence.text}</span></td>
+                <td>${evidence}</td>
+            `;
+            resultsBody.appendChild(row);
+        });
+
+        resultsTable.style.display = 'block';
+
+        if (payload.provenance) {
+            fileHashEl.textContent = payload.provenance.file_sha256 || '—';
+            timestampEl.textContent = payload.provenance.timestamp_utc || '—';
+            jsonOutput.textContent = JSON.stringify(payload, null, 2);
+            provCard.style.display = 'block';
+        }
+    } catch (error) {
+        console.error(error);
+        statusEl.textContent = error.message;
+        statusEl.className = 'error';
+        showToast(error.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        loader.classList.remove('active');
+    }
+});
+</script>
+</body>
+</html>

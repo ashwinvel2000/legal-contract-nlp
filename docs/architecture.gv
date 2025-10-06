@@ -1,0 +1,121 @@
+digraph "legal_mvp_architecture" {
+    graph [
+        rankdir=LR,
+        fontname="Segoe UI",
+        fontsize=16,
+        label="Legal-MVP End-to-End Flow",
+        labelloc=t,
+        bgcolor="white"
+    ];
+
+    node [
+        shape=rect,
+        style="rounded,filled",
+        fontname="Segoe UI",
+        fontsize=12,
+        color="#334155",
+        penwidth=1.2
+    ];
+
+    edge [
+        color="#64748b",
+        arrowsize=0.8,
+        penwidth=1.3
+    ];
+
+    subgraph cluster_ui {
+        label="Experience Layer";
+        bgcolor="#e0ecff";
+        fontcolor="#1d4ed8";
+
+        ui_demo [label="Browser Demo\n(Upload PDF @ /)", fillcolor="#d6e4ff"];
+        ui_docs [label="Demo Walkthrough\n(/demo-guide)", fillcolor="#d6e4ff"];
+    }
+
+    subgraph cluster_fastapi {
+        label="FastAPI App (uvicorn app.main:app)";
+        bgcolor="#fde7e9";
+        fontcolor="#b91c1c";
+
+        lifespan [label="Lifespan Startup\n• load QA: akdeniz27/roberta-base-cuad\n• load NER: dslim/bert-base-NER", fillcolor="#ffe6d5"];
+        templates [label="Jinja2 Templates\n demo.html / demo_guide.html", fillcolor="#ffe6d5"];
+        extract_router [label="/extract Router\n• hash bytes\n• call services\n• append audit log", fillcolor="#eedafc"];
+        health [label="/health", fillcolor="#ffe6d5"];
+    }
+
+    subgraph cluster_services {
+        label="Service Layer";
+        bgcolor="#edf7ff";
+        fontcolor="#0f766e";
+
+        pdf_text [label="services/pdf_text.py\nextract_pages (pdfplumber)", fillcolor="#e6fbef"];
+        qa_extract [label="services/qa_extract.py\nQA + heuristics (parties, dates, law)", fillcolor="#ffe6f1"];
+        ner_fallback [label="services/ner_fallback.py\nNER fallback heuristics", fillcolor="#e6fbef"];
+    }
+
+    subgraph cluster_core {
+        label="Core Utilities";
+        bgcolor="#efe8ff";
+        fontcolor="#6d28d9";
+
+        core_config [label="core/config.py\nconstants, regex", fillcolor="#efe8ff"];
+        core_utils [label="core/utils.py\nsha256, timestamps, evidence", fillcolor="#e6f6ff"];
+        core_logging [label="core/logging.py\nappend audit JSONL", fillcolor="#fef3c7"];
+        core_model [label="core/model.py\nget_qa / get_ner", fillcolor="#ffe4e6"];
+    }
+
+    subgraph cluster_outputs {
+        label="External Outputs / Stores";
+        bgcolor="#fff7e6";
+        fontcolor="#c2410c";
+
+        audit_log [label="audit.log\n(hash + confidences)", fillcolor="#fff1c9"];
+        hf_cache [label="~/.cache/huggingface\nQA + NER weights", fillcolor="#ffe4c7"];
+    }
+
+    tests [label="pytest suite\n(tests/test_extract.py)", fillcolor="#e7f5ff", shape=rect];
+    evaluate [label="eval/evaluate.py\nsmall golden set", fillcolor="#e7f5ff", shape=rect];
+
+    subgraph cluster_deploy {
+        label="Containerization & Deployment";
+        bgcolor="#e8f7f4";
+        fontcolor="#047857";
+
+        docker_build [label="Docker image\n(legal-mvp:latest)", fillcolor="#ccfbf1"];
+        docker_hub [label="Docker Hub registry\nashwinvel2000/legal-mvp", fillcolor="#d1fae5"];
+        azure_app [label="Azure Web App / Container Apps\n≥3.5 GB RAM (set PORT=8000)", fillcolor="#bbf7d0"];
+        azure_frontend [label="Public URL\n(e.g., https://legal-mvp-*.azurewebsites.net)", fillcolor="#dcfce7"];
+    }
+
+    /* Connections */
+    ui_demo -> templates [label="GET /", fontcolor="#475569"];
+    ui_docs -> templates [label="GET /demo-guide", fontcolor="#475569"];
+    templates -> extract_router [label="POST /extract", fontcolor="#475569"];
+
+    lifespan -> core_model;
+    extract_router -> pdf_text;
+    extract_router -> qa_extract;
+    extract_router -> core_utils;
+    extract_router -> core_logging;
+
+    qa_extract -> ner_fallback [label="fallback", fontcolor="#475569"];
+    qa_extract -> core_config;
+    qa_extract -> core_model;
+    pdf_text -> core_config;
+    ner_fallback -> core_config;
+
+    core_logging -> audit_log;
+    core_model -> hf_cache [label="loads", fontcolor="#475569"];
+
+    tests -> extract_router [label="mock & call", fontcolor="#475569"];
+    tests -> templates;
+    evaluate -> pdf_text [label="read PDFs", fontcolor="#475569"];
+    evaluate -> qa_extract [label="extract fields", fontcolor="#475569"];
+    health -> tests [style="dashed", color="#94a3b8", fontcolor="#94a3b8", label="status check"];
+
+    extract_router -> docker_build [style="dashed", label="uvicorn app\ncontainerized", fontcolor="#475569"];
+    docker_build -> docker_hub [label="docker push", fontcolor="#047857"];
+    docker_hub -> azure_app [label="pull image", fontcolor="#047857"];
+    azure_app -> azure_frontend [label="serve /extract", fontcolor="#047857"];
+    azure_frontend -> ui_demo [style="dashed", label="public access", fontcolor="#047857"];
+}

@@ -1,0 +1,71 @@
+digraph "legal_mvp_mindmap" {
+    graph [
+        fontname="Segoe UI",
+        bgcolor="white",
+        label="Legal-MVP Processing Mindmap",
+        labelloc=t,
+        fontsize=18
+    ];
+
+    node [
+        shape=rect,
+        style="rounded,filled",
+        fontname="Segoe UI",
+        fontsize=12,
+        color="#1f2937",
+        fillcolor="#e0f2fe",
+        width=0,
+        height=0,
+        margin="0.20,0.12"
+    ];
+
+    edge [
+        color="#475569",
+        arrowsize=0.75,
+        penwidth=1.1
+    ];
+
+    root [label="Upload PDF"];
+
+    extract_text [label="Extract digital text\n(pdfplumber per page)", fillcolor="#fffbeb"];
+    qa_scores [label="QA pipeline scores pages\n(Who are parties? What dates?\nGoverning law?)", fillcolor="#fde68a"];
+    qa_pass [label="Score ≥ 0.25\nkeep best answers", fillcolor="#fef3c7"];
+    qa_fail [label="Score < 0.25 / empty", fillcolor="#fee2e2"];
+
+    topk_snippet [label="Grab QA snippet + top_k spans", fillcolor="#ede9fe"];
+    targeted_qs [label="Targeted questions\n(first/second, shipper/transport)", fillcolor="#e9d5ff"];
+    ner_clip [label="NER over snippet\nfilter roles, boost company cues", fillcolor="#c7d2fe"];
+    ner_fallback [label="Fallback scan\nNER + cue phrases", fillcolor="#ede9fe"];
+
+    date_direct [label="Validate QA date\n(regex)", fillcolor="#dcfce7"];
+    date_fallback [label="Date keyword fallback", fillcolor="#dcfce7"];
+    gov_law [label="QA answer: Governing law", fillcolor="#bbf7d0"];
+
+    audit [label="Write audit record\n(hash + confidences)", fillcolor="#f1f5f9"];
+    response [label="Return JSON response\n(parties, dates, governing law)", fillcolor="#bae6fd"];
+
+    root -> extract_text;
+    extract_text -> qa_scores;
+
+    qa_scores -> qa_pass;
+    qa_scores -> qa_fail;
+
+    qa_pass -> topk_snippet [label="party clause"];
+    topk_snippet -> targeted_qs [label="if <2 orgs"];
+    targeted_qs -> ner_clip;
+    topk_snippet -> ner_clip;
+
+    qa_fail -> ner_fallback [label="parties"];
+
+    ner_clip -> response [label="party_a / party_b"];
+    ner_fallback -> response [label="fallback parties"];
+
+    qa_pass -> date_direct [label="dates"];
+    qa_pass -> gov_law [label="governing law"];
+    date_direct -> response [label="QA dates"];
+    qa_fail -> date_fallback [label="dates"];
+    date_fallback -> response [label="fallback dates"];
+    gov_law -> response [label="governing_law"];
+
+    response -> audit [label="append"];
+}

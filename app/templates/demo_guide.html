@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>legal-mvp walk-through</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 0; background: #f7fafc; color: #1e293b; }
+        .wrapper { max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+        h1 { margin-bottom: 0.25rem; }
+        p.lead { color: #475569; margin-top: 0; }
+        section { background: #fff; border-radius: 16px; padding: 24px 28px; margin-top: 24px; box-shadow: 0 16px 28px rgba(15,23,42,0.08); }
+        h2 { margin-top: 0; }
+        ol { padding-left: 20px; }
+        li { margin-bottom: 18px; }
+        code { background: #0f172a; color: #e2e8f0; padding: 2px 6px; border-radius: 6px; font-size: 0.92rem; }
+        .tip { background: rgba(37, 99, 235, 0.08); border-radius: 12px; padding: 16px 18px; margin-top: 16px; color: #1d4ed8; font-weight: 500; }
+        a { color: #1d4ed8; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <h1>Interview walk-through</h1>
+    <p class="lead">A short script you can follow to impress the panel in under three minutes.</p>
+
+    <section>
+        <h2>1. Launch the service</h2>
+        <ol>
+            <li>Activate the virtual environment and run <code>uvicorn app.main:app --reload</code>.</li>
+            <li>Explain that FastAPI exposes both the REST API and the light management UI from one codebase.</li>
+            <li>Mention that the QA + NER models load once at startup (visible in the logs).</li>
+        </ol>
+    </section>
+
+    <section>
+        <h2>2. Demo the extraction UI</h2>
+        <ol>
+            <li>Navigate to <code>http://localhost:8000/</code> and show the upload card with guidance badges.</li>
+            <li>Drop in a digital NDA PDF (not scanned). Point out the loading spinner and toast feedback.</li>
+            <li>Highlight colour-coded confidence and the evidence toggles for quick auditing.</li>
+            <li>Scroll to “Provenance Snapshot” to show the hashed file ID and timestamp.</li>
+        </ol>
+        <div class="tip">Talking point 👉 “We never persist contract text. Only the SHA256 hash and field confidences land in the audit trail.”</div>
+    </section>
+
+    <section>
+        <h2>3. Wrap with next steps</h2>
+        <ol>
+            <li>Mention the fallback heuristics (NER + phrase cues) for parties and dates.</li>
+            <li>Call out the roadmap: OCR support, richer validation, active learning for the golden set.</li>
+            <li>Invite them to review the API contract via <code>/docs</code> or run <code>python eval/evaluate.py</code> on the golden PDFs.</li>
+        </ol>
+    </section>
+
+    <p><a href="/">⬅ Back to demo</a></p>
+</div>
+</body>
+</html>
