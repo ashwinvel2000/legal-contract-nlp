@@ -22,10 +22,10 @@
 - **Audit trail** – each extraction logs file hash + confidences (no document text stored).
 - **Dockerized & Azure-ready** – the exact image powering the live demo.
 
-![Demo of the app](docs/1006.gif)
+
 
 ---
-
+![Demo of the app](docs/1006.gif)
 ##  How the workflow runs
 
 1. **PDF upload** → FastAPI receives the file and hashes it.
