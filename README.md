@@ -25,7 +25,7 @@
 
 
 ---
-![Demo of the app](docs/1006.gif)
+![Demo of the app](docs/1007.gif)
 ##  How the workflow runs
 
 1. **PDF upload** → FastAPI receives the file and hashes it.
