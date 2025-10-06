@@ -22,7 +22,7 @@
 - **Audit trail** – each extraction logs file hash + confidences (no document text stored).
 - **Dockerized & Azure-ready** – the exact image powering the live demo.
 
->  **Video demo** (drop your link here): `TODO: https://…`
+>  **Video demo** docs/1006.mp4
 
 ---
 
